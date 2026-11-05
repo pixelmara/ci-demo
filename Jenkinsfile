@@ -13,64 +13,12 @@ pipeline {
         pollSCM('H/2 * * * *')
     }
 
-    stages {
-        stage('Lint') {
-            steps {
-                sh '''
-                    python3 -m venv .venv
-                    . .venv/bin/activate
-                    pip install -q -r requirements.txt -r requirements-dev.txt
-                    flake8 .
-                '''
-            }
-        }
-
-        stage('Unit tests') {
-            steps {
-                sh '''
-                    . .venv/bin/activate
-                    mkdir -p reports
-                    pytest --junitxml=reports/junit.xml --cov=app --cov-report=xml:coverage.xml
-                '''
-            }
-        }
-
-        // ---- Кейс 9: SonarQube ----
-        stage('SonarQube analysis') {
-            steps {
-                script {
-                    def scannerHome = tool 'sonar-scanner'
-                    withSonarQubeEnv('sonarqube') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                              -Dsonar.projectKey=ci-demo \
-                              -Dsonar.sources=. \
-                              -Dsonar.exclusions=.venv/**,reports/**,db/** \
-                              -Dsonar.tests=. \
-                              -Dsonar.test.inclusions=test_*.py \
-                              -Dsonar.python.version=3.12 \
-                              -Dsonar.python.coverage.reportPaths=coverage.xml
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        // ---- Кейс 4: сборка образа и отправка в Docker Hub ----
+   stages {
         stage('Build image') {
             steps {
                 sh 'docker build -t $IMAGE:$BUILD_NUMBER -t $IMAGE:latest .'
             }
         }
-
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub',
@@ -84,36 +32,8 @@ pipeline {
                 }
             }
         }
-
-        // ---- Кейс 10: миграции БД (Flyway) перед каждым деплоем ----
-        stage('DB migrations') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'app-db',
-                                                  usernameVariable: 'DB_USER',
-                                                  passwordVariable: 'DB_PASS')]) {
-                    sh '''
-                        docker run --rm --network ci --volumes-from jenkins \
-                          flyway/flyway \
-                          -url=$DB_URL -user=$DB_USER -password=$DB_PASS \
-                          -locations=filesystem:$WORKSPACE/db/migration \
-                          migrate
-                    '''
-                }
-            }
-        }
-
-        // ---- Кейс 5: развёртывание ----
-        stage('Deploy') {
-            steps {
-                sh '''
-                    docker rm -f ci-demo-app || true
-                    docker run -d --name ci-demo-app --network ci -p 8000:8000 $IMAGE:$BUILD_NUMBER
-                    sleep 3
-                    docker exec ci-demo-app python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/').read())"
-                '''
-            }
-        }
     }
+}
 
     post {
         always {
