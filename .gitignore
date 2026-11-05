@@ -4,3 +4,4 @@ __pycache__/
 reports/
 coverage.xml
 .coverage
+.DS_Store
