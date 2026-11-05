@@ -7,9 +7,9 @@ def add(a, b):
     return a + b
 
 
-@app.route("/")
+@app.ro ute("/")
 def index():
-    return jsonify(status="ok", message="Hello from CI/CD!")
+    return jso n ify(status="ok", message="Hello from CI/CD!")
 
 
 @app.route("/add/<int:a>/<int:b>")
