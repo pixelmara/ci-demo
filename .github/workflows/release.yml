@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # нужна вся история и все теги для changelog
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Тесты перед релизом
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt
+          pytest
+
+      - name: Сгенерировать changelog
+        run: |
+          PREV=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          if [ -z "$PREV" ]; then RANGE="$GITHUB_REF_NAME"; else RANGE="$PREV..$GITHUB_REF_NAME"; fi
+          {
+            echo "## Изменения в ${GITHUB_REF_NAME}"
+            echo
+            git log $RANGE --pretty=format:"- %s (%h, %an)"
+            echo
+          } > CHANGELOG.md
+          cat CHANGELOG.md
+
+      - name: Собрать артефакты
+        run: |
+          mkdir -p dist
+          tar -czf dist/ci-demo-${GITHUB_REF_NAME}.tar.gz app.py requirements.txt Dockerfile Procfile
+          docker build -t ci-demo:${GITHUB_REF_NAME} .
+          docker save ci-demo:${GITHUB_REF_NAME} | gzip > dist/ci-demo-image-${GITHUB_REF_NAME}.tar.gz
+
+      - name: Создать релиз на GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: CHANGELOG.md
+          files: dist/*
