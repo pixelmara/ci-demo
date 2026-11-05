@@ -9,7 +9,7 @@ def add(a, b):
 
 @app.route("/")
 def index():
-    return jsonify(status="ok", message="Hello from CI/CD!")
+    return jsonify(status="ok", message="Hello from Maria's CI/CD!")
 
 
 @app.route("/add/<int:a>/<int:b>")
