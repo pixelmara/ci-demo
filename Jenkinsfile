@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'ВАШ_ЛОГИН_DOCKERHUB'      // <-- замените
+        DOCKERHUB_USER = 'pixelmara'
         IMAGE          = "${DOCKERHUB_USER}/ci-demo"
         DB_URL         = 'jdbc:postgresql://ci-postgres:5432/app'
     }
