@@ -1,7 +1,7 @@
 stages:
   - test
-  - build
-  - deploy
+#  - build
+#  - deploy
 
 # ---- Кейс 2: юнит-тесты при каждом коммите ----
 unit-tests:
@@ -18,34 +18,34 @@ unit-tests:
 
 # ---- Кейс 8: сборка образа и деплой в Kubernetes через Helm ----
 # Эти задачи выполняет ваш собственный раннер с тегом local-k8s
-variables:
-  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+#variables:
+#  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
 
-build-image:
-  stage: build
-  tags: [local-k8s]
-  script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker build -t "$IMAGE" .
-    - docker push "$IMAGE"
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+#build-image:
+#  stage: build
+#  tags: [local-k8s]
+#  script:
+#    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+#    - docker build -t "$IMAGE" .
+#    - docker push "$IMAGE"
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == "main"
 
-deploy-k8s:
-  stage: deploy
-  tags: [local-k8s]
-  script:
-    - kubectl create secret docker-registry gitlab-registry
-        --docker-server="$CI_REGISTRY"
-        --docker-username="$CI_DEPLOY_USER"
-        --docker-password="$CI_DEPLOY_PASSWORD"
-        --dry-run=client -o yaml | kubectl apply -f -
-    - helm upgrade --install ci-demo ./chart
-        --set image.repository="$CI_REGISTRY_IMAGE"
-        --set image.tag="$CI_COMMIT_SHORT_SHA"
-        --set "imagePullSecrets[0].name=gitlab-registry"
-        --set service.port=8000
-        --wait --timeout 3m
-    - kubectl get pods,svc
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+#deploy-k8s:
+#  stage: deploy
+#  tags: [local-k8s]
+#  script:
+#    - kubectl create secret docker-registry gitlab-registry
+#        --docker-server="$CI_REGISTRY"
+#        --docker-username="$CI_DEPLOY_USER"
+#        --docker-password="$CI_DEPLOY_PASSWORD"
+#        --dry-run=client -o yaml | kubectl apply -f -
+#    - helm upgrade --install ci-demo ./chart
+#        --set image.repository="$CI_REGISTRY_IMAGE"
+#        --set image.tag="$CI_COMMIT_SHORT_SHA"
+#        --set "imagePullSecrets[0].name=gitlab-registry"
+#        --set service.port=8000
+#        --wait --timeout 3m
+#    - kubectl get pods,svc
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == "main"
