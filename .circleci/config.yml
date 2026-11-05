@@ -12,6 +12,14 @@ jobs:
       - run:
           name: Тесты
           command: pytest
+      - run:
+          name: Собрать сайт
+          command: python build_site.py
+      - persist_to_workspace:
+          root: .
+          paths:
+            - public
+
 
   deploy-pages:
     docker:
