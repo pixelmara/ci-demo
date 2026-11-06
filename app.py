@@ -1,5 +1,4 @@
 from flask import Flask, jsonify
-import oc
 
 app = Flask(__name__)
 
