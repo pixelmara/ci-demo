@@ -27,7 +27,36 @@ pipeline {
                     . .venv/bin/activate
                     mkdir -p reports
                     pytest --junitxml=reports/junit.xml
+                    pytest --junitxml=reports/junit.xml --cov=app --cov-report=xml:coverage.xml
                 '''
+            }
+        }
+
+        stage('SonarQube analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'sonar-scanner'
+                    withSonarQubeEnv('sonarqube') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                              -Dsonar.projectKey=ci-demo \
+                              -Dsonar.sources=. \
+                              -Dsonar.exclusions=.venv/**,reports/**,db/** \
+                              -Dsonar.tests=. \
+                              -Dsonar.test.inclusions=test_*.py \
+                              -Dsonar.python.version=3.12 \
+                              -Dsonar.python.coverage.reportPaths=coverage.xml
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
