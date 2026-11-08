@@ -6,3 +6,8 @@ coverage.xml
 .coverage
 .DS_Store
 public/
+kubectl*
+minikube-*
+builds/
+dist/
+CHANGELOG.md
