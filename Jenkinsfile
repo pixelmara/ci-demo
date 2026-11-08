@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE = 'pixelmara/ci-demo'
+        DB_URL = 'jdbc:postgresql://ci-postgres:5432/app'
     }
 
     triggers {
@@ -75,6 +76,22 @@ pipeline {
                         echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
                         docker push $IMAGE:$BUILD_NUMBER
                         docker push $IMAGE:latest
+                    '''
+                }
+            }
+        }
+
+        stage('DB migrations') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'app-db',
+                                                  usernameVariable: 'DB_USER',
+                                                  passwordVariable: 'DB_PASS')]) {
+                    sh '''
+                        docker run --rm --network ci --volumes-from jenkins \
+                          flyway/flyway \
+                          -url=$DB_URL -user=$DB_USER -password=$DB_PASS \
+                          -locations=filesystem:$WORKSPACE/db/migration \
+                          migrate
                     '''
                 }
             }
