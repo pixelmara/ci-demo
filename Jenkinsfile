@@ -41,7 +41,7 @@ pipeline {
                             ${scannerHome}/bin/sonar-scanner \
                               -Dsonar.projectKey=ci-demo \
                               -Dsonar.sources=. \
-                              -Dsonar.exclusions=.venv/**,reports/**,db/** \
+                              -Dsonar.exclusions=.venv/**,reports/**,db/**,chart/**,test_*.py \
                               -Dsonar.tests=. \
                               -Dsonar.test.inclusions=test_*.py \
                               -Dsonar.python.version=3.12 \
